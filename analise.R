@@ -1,4 +1,27 @@
-source("funcoes.R")
+#### SETUP INICIAL ####
+# Este arquivo apenas roda a análise após a execução da Simulação.
+## Rodar Antes de Gerar o Source:
+opcoes = list(
+  VarResposta = "sNPVProfit1",
+  VarCenarios = "Scenario",
+  VarEstrategias = "Lever",
+  N = 10,
+  VarTempo = "time",
+  VarCriterio = "RegretPercentil75",
+  SentidoCriterio = "min",
+  Paralelo = TRUE,
+  ModoParalelo = "PSOCK", # PSOCK - Windows e Linux. FORK - Apenas UNIX
+  SimularApenasCasoBase = FALSE,
+  FullFactorialDesign = TRUE,
+  FiltrarCasosPlausiveis = FALSE
+)
+INICIALIZAR_ESTOQUES_COM_CASO_BASE = FALSE; SIMULAR_HISTORICO_DIFERENTE = FALSE; ANO_INICIO_AVALIACAO = 2018
+planilha_inputs = "params_calibracao.xlsx"
+START<-2018; FINISH <-2028; STEP<-0.0625; SIM_TIME <- seq(START, FINISH, by=STEP)
+VERIFICAR_STOCKS = FALSE; VERIFICAR_CHECKS = FALSE; CHECK_PRECISION = 0.001; 
+BROWSE_ON_DIFF = TRUE; VERIFICAR_GLOBAL = FALSE;
+source('funcoes.R', encoding = 'UTF-8')
+
 
 # Carregando Dados da simulação
 # Salvar Resultados com apenas 10 anos simulados.
@@ -10,7 +33,6 @@ results_path = "C:/Temporario/rdm-results-backup/"
 #results = readRDS()
 
 load(paste0(results_path,"results_final.rda"))
-
 
 # Tornando os resultados mais leves:
 
@@ -98,21 +120,15 @@ dataset_todas_as_metricas  = dataset_todas_as_metricas %>%
   left_join(., results$Inputs$Levers, by = "Lever") 
 
 # Escrever para um arquivo:
-
 write.csv(dataset_todas_as_metricas, file = "output_regret_metricas.csv", row.names = F)
-
-View(dataset_todas_as_metricas)
 
 dados_simulados = results$DadosSimulados %>% 
   group_by(time, Lever) %>%
   summarise_all(funs(mean, sd, robustness, percentile_75))
 
-
 dados_simulados = dplyr::inner_join(dados_simulados, results$Inputs$Levers)
 
 dados_ultimo_ano = dados_simulados[dados_simulados$time == 2028,]
-
-View(dados_ultimo_ano)
 
 # Funcionalidade
 write.csv(x = dados_simulados, file = "output_analise_multi_objetivo.csv", row.names = F)
@@ -126,8 +142,6 @@ write.csv(x = dados_ultimo_ano, file = "output_analise_multi_objetivo.csv", row.
 estrategia_profit = 31
 
 threshold_profit = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==estrategia_profit),"sNPVProfit1RegretPercentil75"]) 
-
-planilha_inputs = "./../calibracao/params_calibracao_opcao1.xlsx"
 
 uncertainty_original_names = names(df_vulnerabilidade_profit[,5:ncol(df_vulnerabilidade_profit)])
 
