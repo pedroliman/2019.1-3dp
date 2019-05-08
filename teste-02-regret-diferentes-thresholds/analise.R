@@ -66,16 +66,9 @@ results$DadosUltimoPeriodo$aPerformanceAvg = rowSums(results$DadosUltimoPeriodo[
 
 results$DadosUltimoPeriodo$sTotalInstalledBase = rowSums(results$DadosUltimoPeriodo[,c("sInstalledBase1", "sInstalledBase2", "sInstalledBase3", "sInstalledBase4")])
 
-# Arredondando os Valores das Estratégias:
-
-results$Ensemble[,"aSwitchForCapacityStrategy2"] = round(results$Ensemble[,"aSwitchForCapacityStrategy2"],0)
-results$Ensemble[,"aSwitchForCapacityStrategy3"] = round(results$Ensemble[,"aSwitchForCapacityStrategy3"],0)
-results$Ensemble[,"aSwitchForCapacityStrategy4"] = round(results$Ensemble[,"aSwitchForCapacityStrategy4"],0)
-
-
-
-
 ## Analisando o Regret de Diversas Variáveis:
+
+
 analise_regret_completa = calcular_e_resumir_regret(dados = results$DadosUltimoPeriodo, var_resposta = results$Opcoes$VarResposta, var_cenarios = results$Opcoes$VarCenarios, var_estrategias = results$Opcoes$VarEstrategias)
 
 analise_regret_profit = analise_regret_completa$ResumoEstrategias
@@ -145,6 +138,14 @@ write.csv(x = dados_simulados, file = "output_analise_multi_objetivo.csv", row.n
 
 write.csv(x = dados_ultimo_ano, file = "output_analise_multi_objetivo.csv", row.names = F)
 
+
+
+#### Analisando Estratégia 31 ####
+## Single Objective Analysis
+estrategia_profit = 31
+
+threshold_profit = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==estrategia_profit),"sNPVProfit1RegretPercentil75"]) 
+
 uncertainty_original_names = names(df_vulnerabilidade_profit[,5:ncol(df_vulnerabilidade_profit)])
 
 uncertainty_new_names = c("Discard.Rate", "Demand.Elastic.", 
@@ -160,88 +161,46 @@ uncertainty_new_names = c("Discard.Rate", "Demand.Elastic.",
                           "Tgt.Mkt.Share.4", "Mkt.Strat.2", "Mkt.Strat.3", 
                           "Mkt.Strat.4")
 
-
-
-#### Analisando Profit ####
-
-estrategias_analisar = c(31, 13, 15)
-
-variaveis_interesse = c("sNPVProfit1", "aPerformance1", "aOrderShare1", "sTotalInstalledBase", "aPerformanceAvg")
-sufixo = c("Regret")
-sentidos_vulnerabilidade = c(">=", ">=")
-variavel_percentil = c("Percentil75")
-
-for (estrategia in estrategias_analisar) {
-  print(paste("Analisando Estrategia ",estrategia))
-  
-  for (variavel_interesse in variaveis_interesse) {
-    print(paste("Variavel ",variavel_interesse))
-    
-    # Criando DF de Vulnerabilidade:
-    analise_regret = calcular_e_resumir_regret(dados = results$DadosUltimoPeriodo, var_resposta = variavel_interesse, var_cenarios = results$Opcoes$VarCenarios, var_estrategias = results$Opcoes$VarEstrategias)
-    
-    # Definindo Threshold:
-    threshold = as.numeric(analise_regret$ResumoEstrategias[which(analise_regret$ResumoEstrategias$Lever==estrategia),paste0(variavel_interesse, sufixo, variavel_percentil)]) 
-    
-    # Criando DF De vulnerabilidade
-    df_vulnerabilidade = obter_df_vulnerabilidade(results = results, 
-                                                         estrategia_candidata = estrategia, 
-                                                         variavel_resposta = paste0(variavel_interesse,sufixo), 
-                                                         threshold = threshold, 
-                                                         planilha_inputs = planilha_inputs, 
-                                                         sentido_vulnerabilidade = ">=",
-                                                         AnaliseRegret = analise_regret)
-    
-    # Alterando o Nome do DF De Vulnerabilidade:
-    names(df_vulnerabilidade) = c(names(df_vulnerabilidade[,1:4]),uncertainty_new_names)
-    
-    # Gerando Arquivos para Análise no PRIM:
-    write.csv(df_vulnerabilidade$CasoInteresse, file = paste0(estrategia,variavel_interesse,sufixo,"_resposta.csv"))
-    
-    # Strategies as Categorical Variables:
-    write.csv(df_vulnerabilidade[,5:ncol(df_vulnerabilidade)], file = paste0(estrategia,variavel_interesse,sufixo,"_incertezas.csv"))
-    
-    
-  }
-  
-}
-
-variavel_interesse = "sNPVProfit1Regret"
-variavel_percentil = "sNPVProfit1RegretPercentil75"
-sentido_vulnerabilidade = ">="
-obj_analise_regret = analise_regret_completa
-## Single Objective Analysis
-estrategia_profit = 31
-
-threshold_profit = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==estrategia_profit),variavel_percentil]) 
-
 df_vulnerabilidade_profit = obter_df_vulnerabilidade(results = results, 
                                               estrategia_candidata = estrategia_profit, 
-                                              variavel_resposta = variavel_interesse, 
+                                              variavel_resposta = "sNPVProfit1Regret" , 
                                               threshold = threshold_profit, 
                                               planilha_inputs = planilha_inputs, 
-                                              sentido_vulnerabilidade = sentido_vulnerabilidade,
-                                              AnaliseRegret = obj_analise_regret)
+                                              sentido_vulnerabilidade = ">=",
+                                              AnaliseRegret = analise_regret_completa)
 
-threshold_profit13 = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==13),variavel_percentil]) 
+df_vulnerabilidade_profit$aSwitchForCapacityStrategy2 = round(df_vulnerabilidade_profit$aSwitchForCapacityStrategy2, digits = 0)
+df_vulnerabilidade_profit$aSwitchForCapacityStrategy3 = round(df_vulnerabilidade_profit$aSwitchForCapacityStrategy3, digits = 0)
+df_vulnerabilidade_profit$aSwitchForCapacityStrategy4 = round(df_vulnerabilidade_profit$aSwitchForCapacityStrategy4, digits = 0)
+
+threshold_profit13 = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==13),"sNPVProfit1RegretPercentil75"]) 
 
 df_vulnerabilidade_profit13 = obter_df_vulnerabilidade(results = results, 
                                                      estrategia_candidata = 13, 
                                                      variavel_resposta = "sNPVProfit1Regret" , 
                                                      threshold = threshold_profit13, 
                                                      planilha_inputs = planilha_inputs, 
-                                                     sentido_vulnerabilidade = sentido_vulnerabilidade,
-                                                     AnaliseRegret = obj_analise_regret)
+                                                     sentido_vulnerabilidade = ">=",
+                                                     AnaliseRegret = analise_regret_completa)
+
+df_vulnerabilidade_profit13$aSwitchForCapacityStrategy2 = round(df_vulnerabilidade_profit13$aSwitchForCapacityStrategy2, digits = 0)
+df_vulnerabilidade_profit13$aSwitchForCapacityStrategy3 = round(df_vulnerabilidade_profit13$aSwitchForCapacityStrategy3, digits = 0)
+df_vulnerabilidade_profit13$aSwitchForCapacityStrategy4 = round(df_vulnerabilidade_profit13$aSwitchForCapacityStrategy4, digits = 0)
 
 threshold_profit15 = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==15),"sNPVProfit1RegretPercentil75"]) 
 
 df_vulnerabilidade_profit15 = obter_df_vulnerabilidade(results = results, 
-                                                       estrategia_candidata = 15, 
+                                                       estrategia_candidata = threshold_profit15, 
                                                        variavel_resposta = "sNPVProfit1Regret" , 
                                                        threshold = threshold_profit15, 
                                                        planilha_inputs = planilha_inputs, 
                                                        sentido_vulnerabilidade = ">=",
-                                                       AnaliseRegret = obj_analise_regret)
+                                                       AnaliseRegret = analise_regret_completa)
+
+df_vulnerabilidade_profit15$aSwitchForCapacityStrategy2 = round(df_vulnerabilidade_profit15$aSwitchForCapacityStrategy2, digits = 0)
+df_vulnerabilidade_profit15$aSwitchForCapacityStrategy3 = round(df_vulnerabilidade_profit15$aSwitchForCapacityStrategy3, digits = 0)
+df_vulnerabilidade_profit15$aSwitchForCapacityStrategy4 = round(df_vulnerabilidade_profit15$aSwitchForCapacityStrategy4, digits = 0)
+
 
 names(df_vulnerabilidade_profit) = c(names(df_vulnerabilidade_profit[,1:4]),uncertainty_new_names)
 names(df_vulnerabilidade_profit13) = c(names(df_vulnerabilidade_profit[,1:4]),uncertainty_new_names)
