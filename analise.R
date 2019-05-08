@@ -1,4 +1,4 @@
-#### SETUP INICIAL ####
+#### Initial Setup ####
 # Este arquivo apenas roda a análise após a execução da Simulação.
 ## Rodar Antes de Gerar o Source:
 opcoes = list(
@@ -23,6 +23,7 @@ BROWSE_ON_DIFF = TRUE; VERIFICAR_GLOBAL = FALSE;
 source('funcoes.R', encoding = 'UTF-8')
 
 
+#### Load Results ####
 # Carregando Dados da simulação
 # Salvar Resultados com apenas 10 anos simulados.
 # Win
@@ -35,7 +36,7 @@ results_path = "/media/pedro/OS/Temporario/rdm-results-backup/"
 
 load(paste0(results_path,"results_final.rda"))
 
-# Tornando os resultados mais leves:
+#### Regret Analysis for Tradeoff Plots ####
 
 # Observando apenas duas medi??es por ano para economizar espa?o:
 ano_inicial = min(results$DadosSimulados$time)
@@ -43,17 +44,6 @@ ano_final = max(results$DadosSimulados$time)
 vetor_tempo = seq.default(from = ano_inicial, to = ano_final, length.out = 21)
 
 results$DadosSimulados = subset(results$DadosSimulados, time %in% vetor_tempo)
-
-
-# Formas Simples de Calcular Índices de Robustez:
-robustness = function(x) {
-  mean(x)/sd(x)
-}
-
-percentile_75 = function(x) {
-  quantile(x, probs = c(0.75))
-}
-
 
 
 ## Calculando Resultados Adicionais no Último Período
@@ -162,7 +152,7 @@ uncertainty_new_names = c("Discard.Rate", "Demand.Elastic.",
 
 
 
-#### Criar E Salvar DFs de Vulnerabilidade ####
+#### Vulnerability Dataframes ####
 
 estrategias_analisar = c(31, 13, 15)
 
@@ -219,7 +209,7 @@ for (estrategia in estrategias_analisar) {
 
 
 
-#### Criar Modelos de Random Forest para Importancia ####
+#### Random Forest Importance Analysis ####
 
 library(randomForest)
 
@@ -251,3 +241,30 @@ for (item in names(vulnerability_analysis_list)){
 
 write.csv(rf_models_importance_df,"rf_models_importance_df.csv")
 write.csv(rf_models_oobs_df, "rf_models_oobs_df.csv")
+
+
+#### Boruta Feature Analysis ####
+library(Boruta)
+
+boruta_importance_results = data.frame()
+boruta_output_list = list()
+
+for (item in names(vulnerability_analysis_list)){
+  print(paste0("Executing Boruta Feature Analysis for ", item))
+  
+  boruta_output <- Boruta(factor(CasoInteresse) ~ ., data = vulnerability_analysis_list[[item]], doTrace=2)
+  
+  boruta_output_list[[item]] = boruta_output
+  
+  parametros_selecionados_boruta = getSelectedAttributes(boruta_output)
+  tabela_resultados_boruta = arrange(cbind(attr=rownames(attStats(boruta_output)), attStats(boruta_output)),desc(medianImp))
+  tabela_resultados_boruta$Rank = rownames(tabela_resultados_boruta)
+  tabela_resultados_boruta$Model = item
+  
+  boruta_importance_results = rbind(boruta_importance_results, tabela_resultados_boruta)
+  
+}
+
+write.csv(boruta_importance_results, "boruta_importance_results.csv")
+
+
