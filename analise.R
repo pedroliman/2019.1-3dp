@@ -152,17 +152,17 @@ uncertainty_new_names = c("Discard.Rate", "Demand.Elastic.",
                           "Rep.Delay", "Cap.Acqui.Delay", "Sens.Attract.Avail.", 
                           "Sens.Attract.Price", "Learn.Curv.Str.", "Fixed.Var.Ratio.", 
                           "Cap.Utiliz.", "Sens.Price.Cost", "Sens.Price.Demmand.Suppl.", 
-                          "Sens.Price.Share", "R&D.Real.Time", "Patent.Cost", 
+                          "Sens.Price.Share", "RD.Real.Time", "Patent.Cost", 
                           "Patent.Eval.Time", "Rej.Ratio", "Patent.Useful.Time", 
                           "Patent.Perf.Slope", "Sens.Attract.Perf.", "Init.Reord.Share", 
-                          "Open.R&D.2", "Open.R&D.3", "Open.R&D.4", "R&D.Budgt.2", 
-                          "R&D.Budgt.3", "R&D.Budgt.4", "Tgt.Mkt.Share.2", "Tgt.Mkt.Share.3", 
+                          "Open.RD.2", "Open.RD.3", "Open.RD.4", "RD.Budgt.2", 
+                          "RD.Budgt.3", "RD.Budgt.4", "Tgt.Mkt.Share.2", "Tgt.Mkt.Share.3", 
                           "Tgt.Mkt.Share.4", "Mkt.Strat.2", "Mkt.Strat.3", 
                           "Mkt.Strat.4")
 
 
 
-#### Analisando Profit ####
+#### Criar E Salvar DFs de Vulnerabilidade ####
 
 estrategias_analisar = c(31, 13, 15)
 
@@ -170,6 +170,8 @@ variaveis_interesse = c("sNPVProfit1", "aPerformance1", "aOrderShare1", "sTotalI
 sufixo = c("Regret")
 sentidos_vulnerabilidade = c(">=", ">=")
 variavel_percentil = c("Percentil75")
+
+vulnerability_analysis_list = list()
 
 for (estrategia in estrategias_analisar) {
   print(paste("Analisando Estrategia ",estrategia))
@@ -195,77 +197,43 @@ for (estrategia in estrategias_analisar) {
     # Alterando o Nome do DF De Vulnerabilidade:
     names(df_vulnerabilidade) = c(names(df_vulnerabilidade[,1:4]),uncertainty_new_names)
     
+    analysis_name = paste0(estrategia,variavel_interesse,sufixo)
     # Gerando Arquivos para Análise no PRIM:
     write.csv(df_vulnerabilidade$CasoInteresse, file = paste0(estrategia,variavel_interesse,sufixo,"_resposta.csv"))
     
     # Strategies as Categorical Variables:
     write.csv(df_vulnerabilidade[,5:ncol(df_vulnerabilidade)], file = paste0(estrategia,variavel_interesse,sufixo,"_incertezas.csv"))
     
+    vulnerability_analysis_list[[analysis_name]] = df_vulnerabilidade[,c(1,5:ncol(df_vulnerabilidade))]
     
   }
   
 }
 
-variavel_interesse = "sNPVProfit1Regret"
-variavel_percentil = "sNPVProfit1RegretPercentil75"
-sentido_vulnerabilidade = ">="
-obj_analise_regret = analise_regret_completa
-## Single Objective Analysis
-estrategia_profit = 31
-
-threshold_profit = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==estrategia_profit),variavel_percentil]) 
-
-df_vulnerabilidade_profit = obter_df_vulnerabilidade(results = results, 
-                                              estrategia_candidata = estrategia_profit, 
-                                              variavel_resposta = variavel_interesse, 
-                                              threshold = threshold_profit, 
-                                              planilha_inputs = planilha_inputs, 
-                                              sentido_vulnerabilidade = sentido_vulnerabilidade,
-                                              AnaliseRegret = obj_analise_regret)
-
-threshold_profit13 = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==13),variavel_percentil]) 
-
-df_vulnerabilidade_profit13 = obter_df_vulnerabilidade(results = results, 
-                                                     estrategia_candidata = 13, 
-                                                     variavel_resposta = "sNPVProfit1Regret" , 
-                                                     threshold = threshold_profit13, 
-                                                     planilha_inputs = planilha_inputs, 
-                                                     sentido_vulnerabilidade = sentido_vulnerabilidade,
-                                                     AnaliseRegret = obj_analise_regret)
-
-threshold_profit15 = as.numeric(analise_regret_profit[which(analise_regret_profit$Lever==15),"sNPVProfit1RegretPercentil75"]) 
-
-df_vulnerabilidade_profit15 = obter_df_vulnerabilidade(results = results, 
-                                                       estrategia_candidata = 15, 
-                                                       variavel_resposta = "sNPVProfit1Regret" , 
-                                                       threshold = threshold_profit15, 
-                                                       planilha_inputs = planilha_inputs, 
-                                                       sentido_vulnerabilidade = ">=",
-                                                       AnaliseRegret = obj_analise_regret)
-
-names(df_vulnerabilidade_profit) = c(names(df_vulnerabilidade_profit[,1:4]),uncertainty_new_names)
-names(df_vulnerabilidade_profit13) = c(names(df_vulnerabilidade_profit[,1:4]),uncertainty_new_names)
-names(df_vulnerabilidade_profit15) = c(names(df_vulnerabilidade_profit[,1:4]),uncertainty_new_names)
-
-# Gerando Arquivos para Análise do Profit:
-write.csv(df_vulnerabilidade_profit$CasoInteresse, file = "profit_resposta.csv")
-
-# Strategies as Categorical Variables:
-write.csv(df_vulnerabilidade_profit[,5:ncol(df_vulnerabilidade_profit)], file = "profit_incertezas.csv")
-
-# Analising Compromise Strategy:
-
-# Gerando Arquivos para Análise do Profit:
-write.csv(df_vulnerabilidade_profit13$CasoInteresse, file = "profit_resposta13.csv")
-
-# Strategies as Categorical Variables:
-write.csv(df_vulnerabilidade_profit13[,5:ncol(df_vulnerabilidade_profit13)], file = "profit_incertezas13.csv")
 
 
-# Gerando Arquivos para Análise do Profit:
-write.csv(df_vulnerabilidade_profit15$CasoInteresse, file = "profit_resposta15.csv")
+#### Criar Modelos de Random Forest para Importancia ####
 
-# Strategies as Categorical Variables:
-write.csv(df_vulnerabilidade_profit15[,5:ncol(df_vulnerabilidade_profit15)], file = "profit_incertezas15.csv")
+library(randomForest)
 
+# Using for since I don't know how to use apply for this
+rf_models_list = list()
+rf_models_oobs = list()
+rf_models_importance_df = data.frame()
+
+for (item in names(vulnerability_analysis_list)){
+  print(paste0("Creating RF Model for ", item))
+  rf_model = randomForest(formula = factor(CasoInteresse) ~ ., data = vulnerability_analysis_list[[item]])
+  OOB_error_rate_estimate = rf_model$err.rate[rf_model$ntree,1]
+  importance_order = order(rf_model$importance, decreasing = T)
+  variable_names = rownames(rf_model$importance)
+  rf_models_importance_df = rbind(rf_models_importance_df, data.frame(
+    Variable = variable_names,
+    ImportanceOrder = importance_order,
+    MeanDecreaseGini = unname(rf_model$importance),
+    Model = item
+  ))
+  rf_models_list[[item]] = rf_model
+  rf_models_oobs[[item]] = OOB_error_rate_estimate
+}
 
