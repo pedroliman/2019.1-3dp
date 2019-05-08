@@ -166,7 +166,8 @@ uncertainty_new_names = c("Discard.Rate", "Demand.Elastic.",
 
 estrategias_analisar = c(31, 13, 15)
 
-variaveis_interesse = c("sNPVProfit1", "aPerformance1", "aOrderShare1", "sTotalInstalledBase", "aPerformanceAvg")
+variaveis_interesse = c("sNPVProfit1", "aPerformance1", "aOrderShare1", "sTotalInstalledBase", "aPerformanceAvg", "sPriceAvg")
+sentido = c(rep("max",5), "min")
 sufixo = c("Regret")
 sentidos_vulnerabilidade = c(">=", ">=")
 variavel_percentil = c("Percentil75")
@@ -179,8 +180,14 @@ for (estrategia in estrategias_analisar) {
   for (variavel_interesse in variaveis_interesse) {
     print(paste("Variavel ",variavel_interesse))
     
+    posicao_variavel = which(variaveis_interesse==variavel_interesse)
+    
     # Criando DF de Vulnerabilidade:
-    analise_regret = calcular_e_resumir_regret(dados = results$DadosUltimoPeriodo, var_resposta = variavel_interesse, var_cenarios = results$Opcoes$VarCenarios, var_estrategias = results$Opcoes$VarEstrategias)
+    analise_regret = calcular_e_resumir_regret(dados = results$DadosUltimoPeriodo, 
+                                               var_resposta = variavel_interesse, 
+                                               var_cenarios = results$Opcoes$VarCenarios, 
+                                               var_estrategias = results$Opcoes$VarEstrategias,
+                                               sentido = sentido[posicao_variavel])
     
     # Definindo Threshold:
     threshold = as.numeric(analise_regret$ResumoEstrategias[which(analise_regret$ResumoEstrategias$Lever==estrategia),paste0(variavel_interesse, sufixo, variavel_percentil)]) 
@@ -219,6 +226,7 @@ library(randomForest)
 # Using for since I don't know how to use apply for this
 rf_models_list = list()
 rf_models_oobs = list()
+rf_models_oobs_df = data.frame()
 rf_models_importance_df = data.frame()
 
 for (item in names(vulnerability_analysis_list)){
@@ -233,7 +241,13 @@ for (item in names(vulnerability_analysis_list)){
     MeanDecreaseGini = unname(rf_model$importance),
     Model = item
   ))
+  rf_models_oobs_df = rbind(rf_models_oobs_df,
+                            data.frame(
+                              Model = item,
+                              OOB = OOB_error_rate_estimate
+                            ))
   rf_models_list[[item]] = rf_model
-  rf_models_oobs[[item]] = OOB_error_rate_estimate
 }
 
+write.csv(rf_models_importance_df,"rf_models_importance_df.csv")
+write.csv(rf_models_oobs_df, "rf_models_oobs_df.csv")
