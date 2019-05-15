@@ -1,0 +1,8 @@
+# Processo Realizado:
+
+ - Para cada uma das variáveis analisadas (names(rf_models_list)), executar o comando no python:
+ - python exec_prim.py NomeVariavel
+ - Procurar por um box no gráfico que tenha > 60 % de Densidade e < 4 variáveis. Se há, salvar imagem do box na Pasta;
+ - Em todo Caso, salvar o plot dos tradeoffs cobertura e densidade.
+
+- Próximo passo: Pedir para alguém tabular os dados da análise do PRIM.
