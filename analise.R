@@ -27,7 +27,7 @@ source('funcoes.R', encoding = 'UTF-8')
 # Carregando Dados da simulação
 # Salvar Resultados com apenas 10 anos simulados.
 # Win
-# results_path = "C:/Temporario/rdm-results-backup/"
+results_path = "C:/Temporario/rdm-results-backup/"
 # Linux
 results_path = "/media/pedro/OS/Temporario/rdm-results-backup/"
 #save(results, file = paste0(results_path,"results_final.rda"))
@@ -265,6 +265,43 @@ for (item in names(vulnerability_analysis_list)){
   
 }
 
-write.csv(boruta_importance_results, "boruta_importance_results.csv")
+boruta_importance_results
 
 
+boruta_importance_results$Lever = ifelse(grepl("31",boruta_importance_results$Model),31,
+                                         ifelse(grepl("13",boruta_importance_results$Model),13,
+                                                ifelse(grepl("15",boruta_importance_results$Model),15,0)))
+
+
+
+boruta_importance_results$Outcome = ifelse(grepl("NPVProfit1Regret",boruta_importance_results$Model),"NPV",ifelse(grepl("Performance1Regret",
+                                    boruta_importance_results$Model),"Product Perf.",
+                                    ifelse(grepl("OrderShare1Regret",boruta_importance_results$Model),"Mkt. Share",
+                                           ifelse(grepl("PriceAvgRegret",boruta_importance_results$Model),"Avg. Price",
+                                                  ifelse(grepl("PerformanceAvgRegret",boruta_importance_results$Model),"Avg. Perf.",
+                                                         ifelse(grepl("TotalInstalledBaseRegret",boruta_importance_results$Model),"Installed Base",
+                                                                " "))))))
+
+
+## Gerando Código das Estratégias:
+levers_df = results$Inputs$Levers
+
+levers_df$Strategy = paste0(ifelse(levers_df$aSwitchForCapacityStrategy1 == 1, "A", "C"),
+       ".",
+       levers_df$aDesiredMarketShare1*100,
+       ".R",
+       substr(format(round(levers_df$aOrcamentoPeD1, 2), nsmall = 2),3,4),
+       ".",
+       substr(format(round(levers_df$aPercPeDAberto1, 2), nsmall = 2),3,4)
+)
+
+levers_df = levers_df[,c("Lever", "Strategy")]
+
+final_boruta_results = dplyr::left_join(boruta_importance_results, levers_df)
+
+colnames(final_boruta_results)[1] = "Uncertainty"
+colnames(final_boruta_results)[2] = "Importance"
+
+final_boruta_results$Rank = as.numeric(final_boruta_results$Rank)
+
+writexl::write_xlsx(final_boruta_results, "boruta_results.xlsx")
