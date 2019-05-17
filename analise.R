@@ -201,12 +201,15 @@ for (estrategia in estrategias_analisar) {
     # Strategies as Categorical Variables:
     write.csv(df_vulnerabilidade[,5:ncol(df_vulnerabilidade)], file = paste0(estrategia,variavel_interesse,sufixo,"_incertezas.csv"))
     
+    # Ajustando os Resultados para o 
+    
     vulnerability_analysis_list[[analysis_name]] = df_vulnerabilidade[,c(1,5:ncol(df_vulnerabilidade))]
+    
+    writexl::write_xlsx(vulnerability_analysis_list[[analysis_name]], path = paste0(analysis_name, ".xlsx"))
     
   }
   
 }
-
 
 
 #### Random Forest Importance Analysis ####
@@ -305,3 +308,11 @@ colnames(final_boruta_results)[2] = "Importance"
 final_boruta_results$Rank = as.numeric(final_boruta_results$Rank)
 
 writexl::write_xlsx(final_boruta_results, "boruta_results.xlsx")
+
+
+
+dens = 0.7
+gini = 1- (dens^2 + (1-dens)^2)
+gini
+
+# E Se o PRIM Buscasse clusters de baixo Gini Impurity - Seriam encontrados cenários de robustez e cenários de 
