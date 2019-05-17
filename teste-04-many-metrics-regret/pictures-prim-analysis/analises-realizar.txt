@@ -1,0 +1,5 @@
+13ProductPerformance:
+Patent, Rej. Ratio
+
+15InstalledBase:
+Demand Elastic., Patent Perf Slope
