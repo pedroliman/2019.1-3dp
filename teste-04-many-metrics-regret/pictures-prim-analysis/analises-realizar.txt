@@ -1,5 +1,7 @@
 13ProductPerformance:
 Patent, Rej. Ratio
 
+Rejection Ratio não aparece.
+
 15InstalledBase:
 Demand Elastic., Patent Perf Slope
