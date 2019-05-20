@@ -160,7 +160,7 @@ variaveis_interesse = c("sNPVProfit1", "aPerformance1", "aOrderShare1", "sTotalI
 sentido = c(rep("max",5), "min")
 sufixo = c("Regret")
 sentidos_vulnerabilidade = c(">=", ">=")
-variavel_percentil = c("Percentil75")
+variavel_percentil = c("Percentil25")
 
 vulnerability_analysis_list = list()
 
@@ -188,7 +188,7 @@ for (estrategia in estrategias_analisar) {
                                                          variavel_resposta = paste0(variavel_interesse,sufixo), 
                                                          threshold = threshold, 
                                                          planilha_inputs = planilha_inputs, 
-                                                         sentido_vulnerabilidade = ">=",
+                                                         sentido_vulnerabilidade = "<=",
                                                          AnaliseRegret = analise_regret)
     
     # Alterando o Nome do DF De Vulnerabilidade:
