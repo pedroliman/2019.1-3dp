@@ -162,10 +162,14 @@ sufixo = c("Regret")
 sentidos_vulnerabilidade = c(">=", ">=")
 variavel_percentil = c("Percentil75")
 
+vulnerability_dfs = list()
+
 vulnerability_analysis_list = list()
 
 for (estrategia in estrategias_analisar) {
   print(paste("Analisando Estrategia ",estrategia))
+  
+  vulnerability_dfs[[estrategia]] = data.frame()
   
   for (variavel_interesse in variaveis_interesse) {
     print(paste("Variavel ",variavel_interesse))
@@ -202,6 +206,11 @@ for (estrategia in estrategias_analisar) {
     write.csv(df_vulnerabilidade[,5:ncol(df_vulnerabilidade)], file = paste0(estrategia,variavel_interesse,sufixo,"_incertezas.csv"))
     
     # Ajustando os Resultados para o 
+    if (nrow(vulnerability_dfs[[estrategia]]) == 0) {
+      vulnerability_dfs[[estrategia]] = df_vulnerabilidade
+    } else {
+      browser()
+    }
     
     vulnerability_analysis_list[[analysis_name]] = df_vulnerabilidade[,c(1,5:ncol(df_vulnerabilidade))]
     
